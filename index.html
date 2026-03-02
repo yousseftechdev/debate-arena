@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debate Competition</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="/_sdk/element_sdk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link rel="shortcut icon" href="microphone-solid-full.svg" type="image/x-icon">
+    <style>
+        body {
+            --sb-track-color: #18181b;
+            --sb-thumb-color: #f59e0b;
+            --sb-size: 8px;
+        }
+
+        body::-webkit-scrollbar {
+            width: var(--sb-size)
+        }
+
+        body::-webkit-scrollbar-track {
+            background: var(--sb-track-color);
+            border-radius: 10px;
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: var(--sb-thumb-color);
+            border-radius: 10px;
+            border: 1px solid #e2d11a;
+        }
+
+        @supports not selector(::-webkit-scrollbar) {
+            body {
+                scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
+            }
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .title-font {
+            font-family: 'Bebas Neue', sans-serif;
+        }
+
+        .card-container {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .card-container:hover .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg) translateY(-100%);
+        }
+
+        /* Yu-Gi-Oh Card Back Design */
+        .yugioh-back {
+            background: linear-gradient(135deg, #2d1810 0%, #4a2c17 25%, #6b3d1f 50%, #4a2c17 75%, #2d1810 100%);
+            border: 4px solid #8b6914;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .yugioh-back::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border: 2px solid #c9a227;
+            border-radius: 8px;
+        }
+
+        .yugioh-back::after {
+            content: '';
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(ellipse at center, #1a0f0a 0%, #2d1810 40%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .yugioh-oval {
+            width: 65%;
+            height: 55%;
+            background: linear-gradient(180deg, #c9a227 0%, #8b6914 50%, #c9a227 100%);
+            border-radius: 50%;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(201, 162, 39, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .yugioh-oval::before {
+            content: '';
+            position: absolute;
+            width: 85%;
+            height: 80%;
+            background: linear-gradient(180deg, #1a0f0a 0%, #2d1810 50%, #1a0f0a 100%);
+            border-radius: 50%;
+        }
+
+        .yugioh-symbol {
+            position: relative;
+            z-index: 2;
+            width: 50px;
+            height: 50px;
+        }
+
+        .corner-decoration {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 2px solid #c9a227;
+        }
+
+        .corner-tl {
+            top: 15px;
+            left: 15px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .corner-tr {
+            top: 15px;
+            right: 15px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .corner-bl {
+            bottom: 15px;
+            left: 15px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .corner-br {
+            bottom: 15px;
+            right: 15px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .scroll-fade {
+            mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .rule-card {
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .rule-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+    </style>
+    <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+</head>
+
+<body class="h-full bg-zinc-950 text-white overflow-auto">
+    <!-- Top banner image -->
+    <div class="w-full">
+        <!-- reduced height and crop a bit off the top using object-position -->
+        <img src="banner.png" alt="Banner" class="w-full h-98 md:h-98 object-cover object-bottom">
+    </div>
+    <div id="app-wrapper" class="w-full min-h-full">
+        <!-- Hero Section -->
+        <header class="relative py-20 px-6 text-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-amber-900/20 to-transparent"></div>
+            <div class="relative z-10">
+                <h1 id="main-title" class="title-font text-6xl md:text-8xl tracking-wider text-amber-400 mb-4">DEBATE
+                    ARENA 🎤</h1>
+                <p id="subtitle" class="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto">Master the art of
+                    persuasion. Join the ultimate 3v3 debate competition.</p>
+                <div class="mt-8 flex justify-center gap-4">
+                    <a href="#signup"
+                        class="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-8 py-3 rounded-lg transition-all">Register
+                        Now</a> <a href="#rules"
+                        class="border border-zinc-700 hover:border-amber-500 text-zinc-300 hover:text-amber-400 px-8 py-3 rounded-lg transition-all">View
+                        Rules</a>
+                </div>
+                <p id="team-count" class="mt-6 text-zinc-500 text-sm">Loading spots...</p>
+            </div>
+        </header>
+        <!-- Registered Teams Section -->
+        <section id="teams" class="py-16 px-6 bg-zinc-900/30">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="title-font text-4xl text-center text-amber-400 mb-12">REGISTERED TEAMS</h2>
+                <div id="teams-container" class="space-y-3 max-h-96 overflow-y-auto scroll-fade">
+                    <p class="text-center text-zinc-500">Loading teams...</p>
+                </div>
+            </div>
+        </section>
+        <!-- Cards Section -->
+        <section class="py-16 px-6">
+            <h2 class="title-font text-4xl text-center text-amber-400 mb-12">DISCOVER THE ABILITIES</h2>
+            <p class="text-center text-zinc-500 mb-8">Hover/Click over the cards to reveal the ability</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                <!-- Card 1 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-purple-600/40 to-blue-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                ⚡
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Ability Card</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0.1s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-cyan-600/40 to-green-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                🛡️
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Shield Card</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0.2s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-pink-600/40 to-red-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                🔥
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Boost Card</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0.3s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-orange-600/40 to-yellow-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                🌟
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Star Card</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 5 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0.4s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-indigo-600/40 to-purple-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                🔮
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Mystic Card</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 6 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0.5s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-teal-600/40 to-cyan-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                ❄️
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Freeze Card</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 7 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0.6s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-rose-600/40 to-pink-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                💎
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Gem Card</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 8 -->
+                <div class="card-container h-96 float-animation" style="animation-delay: 0.7s;">
+                    <div class="card-inner">
+                        <div class="card-front yugioh-back">
+                            <div class="corner-decoration corner-tl"></div>
+                            <div class="corner-decoration corner-tr"></div>
+                            <div class="corner-decoration corner-bl"></div>
+                            <div class="corner-decoration corner-br"></div>
+                            <div class="yugioh-oval">
+                                <svg class="yugioh-symbol" viewbox="0 0 50 50" fill="none">
+                                    <path d="M25 5 L30 20 L45 25 L30 30 L25 45 L20 30 L5 25 L20 20 Z" fill="#c9a227" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div
+                            class="card-back bg-gradient-to-br from-amber-600/40 to-orange-600/40 border-2 border-amber-500/30 flex flex-col items-center justify-center p-4">
+                            <div class="text-5xl">
+                                ⚔️
+                            </div>
+                            <p class="text-amber-400 text-xs font-semibold mt-3 text-center">Duel Card</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Rules Summary -->
+        <section id="rules" class="py-16 px-6 bg-zinc-900/50">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="title-font text-4xl text-center text-amber-400 mb-12">COMPLETE RULEBOOK</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="rule-card bg-zinc-800/50 border border-zinc-700 rounded-xl p-5">
+                        <h3 class="text-amber-400 font-semibold mb-3 flex items-center gap-2"><span
+                                class="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-xs">👥</span>
+                            Team Structure</h3>
+                        <ul class="text-zinc-400 text-sm space-y-2">
+                            <li>• 3 vs 3 format</li>
+                            <li>• 16 teams maximum</li>
+                            <li>• All grades allowed</li>
+                            <li>• Any team structure permitted</li>
+                        </ul>
+                    </div>
+                    <div class="rule-card bg-zinc-800/50 border border-zinc-700 rounded-xl p-5">
+                        <h3 class="text-amber-400 font-semibold mb-3 flex items-center gap-2"><span
+                                class="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-xs">⏱️</span>
+                            Time Management</h3>
+                        <ul class="text-zinc-400 text-sm space-y-2">
+                            <li>• 4 minutes per speaker</li>
+                            <li>• 1 minute closing per team</li>
+                            <li>• 1 minute timeout per match</li>
+                            <li>• Topics revealed 24H before</li>
+                        </ul>
+                    </div>
+                    <div class="rule-card bg-zinc-800/50 border border-zinc-700 rounded-xl p-5">
+                        <h3 class="text-amber-400 font-semibold mb-3 flex items-center gap-2"><span
+                                class="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-xs">💬</span>
+                            Points of Information</h3>
+                        <ul class="text-zinc-400 text-sm space-y-2">
+                            <li>• 3 POIs allowed per team</li>
+                            <li>• Can accept or reject</li>
+                            <li>• Acceptance improves score</li>
+                            <li>• 1 Ability Card per match</li>
+                        </ul>
+                    </div>
+                    <div class="rule-card bg-zinc-800/50 border border-zinc-700 rounded-xl p-5">
+                        <h3 class="text-amber-400 font-semibold mb-3 flex items-center gap-2"><span
+                                class="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-xs">🌐</span>
+                            Languages &amp; Scoring</h3>
+                        <ul class="text-zinc-400 text-sm space-y-2">
+                            <li>• Arabic &amp; English allowed</li>
+                            <li>• English improves evaluation</li>
+                            <li>• 3 judges per match</li>
+                            <li>• Pre-set evaluation criteria</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Sign Up Section -->
+        <section id="signup" class="py-20 px-6">
+            <div class="max-w-lg mx-auto">
+                <h2 class="title-font text-4xl text-center text-amber-400 mb-4">JOIN THE ARENA</h2>
+                <p class="text-zinc-500 text-center mb-8">Register your team for the debate competition</p>
+                <form id="signup-form" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 space-y-5">
+                    <div>
+                        <label for="team-name" class="block text-zinc-400 text-sm mb-2">Team Name</label> <input
+                            type="text" id="team-name" required placeholder="Enter your team name"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors">
+                    </div>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="member1" class="block text-zinc-400 text-sm mb-2">Member 1 (Captain)</label>
+                            <input type="text" id="member1" required placeholder="Full name"
+                                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                        <div>
+                            <label for="member2" class="block text-zinc-400 text-sm mb-2">Member 2</label> <input
+                                type="text" id="member2" required placeholder="Full name"
+                                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                        <div>
+                            <label for="member3" class="block text-zinc-400 text-sm mb-2">Member 3</label> <input
+                                type="text" id="member3" required placeholder="Full name"
+                                class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-zinc-400 text-sm mb-2">Contact Phone Number</label> <input
+                            type="tel" id="phone" required placeholder="+20 (555) 123-4567"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors">
+                    </div><button type="submit" id="submit-btn"
+                        class="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold py-4 rounded-lg transition-all flex items-center justify-center gap-2">
+                        <span>Register Team</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg></button>
+                    <p id="form-message" class="text-center text-sm hidden"></p>
+                </form>
+            </div>
+        </section>
+        <!-- Footer -->
+        <footer class="py-8 px-6 border-t border-zinc-800 text-center">
+            <p class="text-zinc-600 text-sm">© 2026 Debate Arena. May the best argument win.</p>
+        </footer>
+    </div>
+    <script>
+        const defaultConfig = {
+            main_title: 'DEBATE ARENA',
+            subtitle: 'Master the art of persuasion. Join the ultimate 3v3 debate competition.',
+            background_color: '#09090b',
+            surface_color: '#18181b',
+            text_color: '#a1a1aa',
+            primary_action_color: '#f59e0b',
+            secondary_action_color: '#d97706',
+            font_family: 'Inter',
+            font_size: 16
+        };
+
+        // Supabase config
+        const SUPABASE_URL = 'https://raqqbpznzgdaucweczeb.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_V_9hetu63KPPq0p1vbnexQ_8_HQ-HE2';
+
+        let registeredTeams = [];
+        const MAX_TEAMS = 16;
+
+        // Initialize Supabase
+        function initSupabase() {
+            return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+
+        let supabaseClient = null;
+
+        async function fetchTeams() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('debate_registrations')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                registeredTeams = data || [];
+                updateTeamCount();
+            } catch (err) {
+                console.error('Error fetching teams:', err);
+            }
+        }
+
+        function updateTeamCount() {
+            const countEl = document.getElementById('team-count');
+            const spotsLeft = MAX_TEAMS - registeredTeams.length;
+            if (spotsLeft <= 0) {
+                countEl.textContent = '🔥 All 16 spots filled! Registration closed.';
+                countEl.className = 'mt-6 text-red-400 text-sm font-semibold';
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('submit-btn').className = 'w-full bg-zinc-700 text-zinc-500 font-semibold py-4 rounded-lg cursor-not-allowed';
+            } else {
+                countEl.textContent = `⚡ ${spotsLeft} of 16 spots remaining`;
+                countEl.className = 'mt-6 text-amber-400/80 text-sm';
+            }
+            renderTeamsList();
+        }
+
+        function renderTeamsList() {
+            const container = document.getElementById('teams-container');
+
+            if (registeredTeams.length === 0) {
+                container.innerHTML = '<p class="text-center text-zinc-500 py-8">No teams registered yet. Be the first!</p>';
+                return;
+            }
+
+            container.innerHTML = registeredTeams.map((team, index) => `
+        <div class="bg-zinc-800/40 border border-zinc-700 rounded-lg p-4 hover:border-amber-500/50 transition-colors">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <h3 class="text-amber-400 font-semibold text-lg">${team.team_name}</h3>
+              <div class="mt-2 space-y-1 text-sm text-zinc-400">
+                <p>👥 ${team.member1}${team.member2 ? ', ' + team.member2 : ''}${team.member3 ? ', ' + team.member3 : ''}</p>
+                <p>☎️ ${team.phone}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-semibold px-3 py-1 rounded-full">#${index + 1}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // Form submission
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (registeredTeams.length >= MAX_TEAMS) {
+                showMessage('Registration is closed. All spots are filled.', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Registering...</span><svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            const teamData = {
+                team_name: document.getElementById('team-name').value.trim(),
+                member1: document.getElementById('member1').value.trim(),
+                member2: document.getElementById('member2').value.trim(),
+                member3: document.getElementById('member3').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                const { error } = await supabaseClient
+                    .from('debate_registrations')
+                    .insert([teamData]);
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+
+                if (error) throw error;
+
+                showMessage('🎉 Team registered successfully! See you at the orientation.', 'success');
+                document.getElementById('signup-form').reset();
+                fetchTeams();
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+                console.error('Registration error:', err);
+                showMessage('Registration failed. Please try again.', 'error');
+            }
+        });
+
+        function showMessage(text, type) {
+            const msgEl = document.getElementById('form-message');
+            msgEl.textContent = text;
+            msgEl.className = `text-center text-sm ${type === 'success' ? 'text-green-400' : 'text-red-400'}`;
+            msgEl.classList.remove('hidden');
+            setTimeout(() => msgEl.classList.add('hidden'), 5000);
+        }
+
+        // Element SDK
+        async function onConfigChange(config) {
+            const title = document.getElementById('main-title');
+            const subtitle = document.getElementById('subtitle');
+
+            title.textContent = config.main_title || defaultConfig.main_title;
+            subtitle.textContent = config.subtitle || defaultConfig.subtitle;
+
+            const fontFamily = config.font_family || defaultConfig.font_family;
+            const baseFontStack = 'Inter, sans-serif';
+            document.body.style.fontFamily = `${fontFamily}, ${baseFontStack}`;
+
+            const baseSize = config.font_size || defaultConfig.font_size;
+            subtitle.style.fontSize = `${baseSize * 1.125}px`;
+
+            document.body.style.backgroundColor = config.background_color || defaultConfig.background_color;
+
+            document.querySelectorAll('.rule-card').forEach(card => {
+                card.style.backgroundColor = (config.surface_color || defaultConfig.surface_color) + '80';
+            });
+
+            document.querySelectorAll('.text-zinc-400, .text-zinc-500').forEach(el => {
+                if (!el.classList.contains('text-amber-400')) {
+                    el.style.color = config.text_color || defaultConfig.text_color;
+                }
+            });
+        }
+
+        function mapToCapabilities(config) {
+            return {
+                recolorables: [
+                    {
+                        get: () => config.background_color || defaultConfig.background_color,
+                        set: (value) => { config.background_color = value; window.elementSdk.setConfig({ background_color: value }); }
+                    },
+                    {
+                        get: () => config.surface_color || defaultConfig.surface_color,
+                        set: (value) => { config.surface_color = value; window.elementSdk.setConfig({ surface_color: value }); }
+                    },
+                    {
+                        get: () => config.text_color || defaultConfig.text_color,
+                        set: (value) => { config.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+                    },
+                    {
+                        get: () => config.primary_action_color || defaultConfig.primary_action_color,
+                        set: (value) => { config.primary_action_color = value; window.elementSdk.setConfig({ primary_action_color: value }); }
+                    },
+                    {
+                        get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+                        set: (value) => { config.secondary_action_color = value; window.elementSdk.setConfig({ secondary_action_color: value }); }
+                    }
+                ],
+                borderables: [],
+                fontEditable: {
+                    get: () => config.font_family || defaultConfig.font_family,
+                    set: (value) => { config.font_family = value; window.elementSdk.setConfig({ font_family: value }); }
+                },
+                fontSizeable: {
+                    get: () => config.font_size || defaultConfig.font_size,
+                    set: (value) => { config.font_size = value; window.elementSdk.setConfig({ font_size: value }); }
+                }
+            };
+        }
+
+        function mapToEditPanelValues(config) {
+            return new Map([
+                ['main_title', config.main_title || defaultConfig.main_title],
+                ['subtitle', config.subtitle || defaultConfig.subtitle]
+            ]);
+        }
+
+        // Initialize
+        (async () => {
+            supabaseClient = initSupabase();
+            await fetchTeams();
+
+            if (window.elementSdk) {
+                window.elementSdk.init({
+                    defaultConfig,
+                    onConfigChange,
+                    mapToCapabilities,
+                    mapToEditPanelValues
+                });
+            }
+        })();
+    </script>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'9d5d478bc054baac',t:'MTc3MjQyMTc3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+</body>
+
+</html>

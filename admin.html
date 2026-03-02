@@ -79,6 +79,8 @@
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl title-font text-amber-400">Admin Dashboard</h1>
             <button id="logout-btn" class="text-sm text-amber-400 underline">Logout</button>
+            <button id="clear-db-btn" class="text-sm text-amber-400 underline">Clear DB</button>
+            <button id="fill-db-btn" class="text-sm text-amber-400 underline">Fill DB</button>
         </header>
         <p id="team-count" class="text-amber-400 mb-4"></p>
         <div id="teams-container"
@@ -194,6 +196,62 @@
             }
         }
 
+        async function clearAllTeams() {
+            if (!confirm('Are you sure you want to delete every team?')) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('debate_registrations')
+                    .delete()
+                    // delete every row – id is an auto‑incrementing PK; 0 will
+                    // never match so this removes all records.
+                    .neq('id', 0);
+
+                if (error) throw error;
+
+                console.log('all teams cleared from database');
+                // refresh local array / UI
+                await fetchTeams();
+            } catch (err) {
+                console.error('failed to clear teams:', err);
+            }
+        }
+        async function fillPlaceholderTeams() {
+            // make sure we know how many are already present
+            await fetchTeams();
+            const current = registeredTeams.length;
+            if (current >= MAX_TEAMS) {
+                console.log('already have 16 or more teams – nothing to do');
+                return;
+            }
+
+            const placeholders = [];
+            for (let i = current + 1; i <= MAX_TEAMS; i++) {
+                placeholders.push({
+                    team_name: `Placeholder Team ${i}`,
+                    member1: 'Member One',
+                    member2: 'Member Two',
+                    member3: 'Member Three',
+                    phone: '+0000000000',
+                    created_at: new Date().toISOString()
+                });
+            }
+
+            const { error } = await supabaseClient
+                .from('debate_registrations')
+                .insert(placeholders);
+
+            if (error) {
+                console.error('error inserting placeholder teams', error);
+            } else {
+                console.log('placeholder teams inserted');
+                fetchTeams(); // refresh UI
+            }
+        }
+
+
         // new helpers for editing
         async function updateTeam(id, data) {
             try {
@@ -264,6 +322,8 @@
         });
 
         document.getElementById('logout-btn').addEventListener('click', logout);
+        document.getElementById('clear-db-btn').addEventListener('click', clearAllTeams);
+        document.getElementById('fill-db-btn').addEventListener('click', fillPlaceholderTeams);
 
         (async () => {
             supabaseClient = initSupabase();

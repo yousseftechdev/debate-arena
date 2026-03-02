@@ -525,7 +525,7 @@
             const countEl = document.getElementById('team-count');
             const spotsLeft = MAX_TEAMS - registeredTeams.length;
             if (spotsLeft <= 0) {
-                countEl.textContent = '🔥 All 16 spots filled! Registration closed.';
+                countEl.textContent = '🔥 All 16 spots filled! Registration closed. Please wait for further announcements.';
                 countEl.className = 'mt-6 text-red-400 text-sm font-semibold';
                 document.getElementById('submit-btn').disabled = true;
                 document.getElementById('submit-btn').className = 'w-full bg-zinc-700 text-zinc-500 font-semibold py-4 rounded-lg cursor-not-allowed';
@@ -605,6 +605,66 @@
                 showMessage('Registration failed. Please try again.', 'error');
             }
         });
+
+        /**
+ * insert enough fake entries so that the table contains 16 rows.
+ * call this from the console or wire it to a button when you need it.
+ */
+        async function fillPlaceholderTeams() {
+            // make sure we know how many are already present
+            await fetchTeams();
+            const current = registeredTeams.length;
+            if (current >= MAX_TEAMS) {
+                console.log('already have 16 or more teams – nothing to do');
+                return;
+            }
+
+            const placeholders = [];
+            for (let i = current + 1; i <= MAX_TEAMS; i++) {
+                placeholders.push({
+                    team_name: `Placeholder Team ${i}`,
+                    member1: 'Member One',
+                    member2: 'Member Two',
+                    member3: 'Member Three',
+                    phone: '+0000000000',
+                    created_at: new Date().toISOString()
+                });
+            }
+
+            const { error } = await supabaseClient
+                .from('debate_registrations')
+                .insert(placeholders);
+
+            if (error) {
+                console.error('error inserting placeholder teams', error);
+            } else {
+                console.log('placeholder teams inserted');
+                fetchTeams(); // refresh UI
+            }
+        }
+
+        async function clearAllTeams() {
+            if (!confirm('Are you sure you want to delete every team?')) {
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('debate_registrations')
+                    .delete()
+                    // delete every row – id is an auto‑incrementing PK; 0 will
+                    // never match so this removes all records.
+                    .neq('id', 0);
+
+                if (error) throw error;
+
+                console.log('all teams cleared from database');
+                // refresh local array / UI
+                await fetchTeams();
+            } catch (err) {
+                console.error('failed to clear teams:', err);
+            }
+        }
 
         function showMessage(text, type) {
             const msgEl = document.getElementById('form-message');

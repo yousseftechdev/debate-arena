@@ -547,9 +547,33 @@
       `).join('');
         }
 
+        // helper that returns true if string starts with an uppercase letter
+        function firstUpper(str) {
+            if (!str) return false;
+            const ch = str.trim().charAt(0);
+            return ch === ch.toUpperCase();
+        }
+
         // Form submission
         document.getElementById('signup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // gather trimmed values early for validation
+            const teamName = document.getElementById('team-name').value.trim();
+            const member1 = document.getElementById('member1').value.trim();
+            const member2 = document.getElementById('member2').value.trim();
+            const member3 = document.getElementById('member3').value.trim();
+
+            // capitalization check
+            if (
+                !firstUpper(teamName) ||
+                !firstUpper(member1) ||
+                (member2 && !firstUpper(member2)) ||
+                (member3 && !firstUpper(member3))
+            ) {
+                showMessage("You're applying for an English club competiion and don't know that the first letter of a name should be capitalized?", 'error');
+                return;
+            }
 
             if (registeredTeams.length >= MAX_TEAMS) {
                 showMessage('Registration is closed. All spots are filled.', 'error');
@@ -562,10 +586,10 @@
             submitBtn.innerHTML = '<span>Registering...</span><svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
             const teamData = {
-                team_name: document.getElementById('team-name').value.trim(),
-                member1: document.getElementById('member1').value.trim(),
-                member2: document.getElementById('member2').value.trim(),
-                member3: document.getElementById('member3').value.trim(),
+                team_name: teamName,
+                member1,
+                member2,
+                member3,
                 phone: document.getElementById('phone').value.trim(),
                 created_at: new Date().toISOString()
             };

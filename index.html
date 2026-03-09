@@ -208,6 +208,37 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         }
 
+        /* announcement popup */
+        .announcement {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: #fde68a;
+            color: #18181b;
+            padding: .75rem 1rem;
+            border-radius: .5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            max-width: 20rem;
+            font-size: .875rem;
+        }
+
+        .announcement:nth-child(2) {
+            bottom: 7rem;
+        }
+
+        .close-announcement {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+            color: inherit;
+        }
+
         /* phone-only warning overlay */
         #mobile-warning {
             display: none;
@@ -238,6 +269,7 @@
                 display: none;
             }
         }
+        
     </style>
     <style>
         body {
@@ -248,6 +280,17 @@
 </head>
 
 <body class="h-full bg-zinc-950 text-white overflow-auto">
+    <!-- announcement popups -->
+    <div class="announcement">
+        <span><strong>Important:</strong> rules have changed - Arabic is no longer allowed, only English may be used.
+        </span>
+        <button class="close-announcement" aria-label="Close">&times;</button>
+    </div>
+    <div class="announcement">
+        <span><strong>ALSO Important:</strong> The side your team is on is randomly assigneed, you won't know if you're opposing or proposing until the the match.
+        </span>
+        <button class="close-announcement" aria-label="Close">&times;</button>
+    </div>
     <!-- mobile warning message -->
     <div id="mobile-warning">
         Cough cough... this site wasn't inteded for mobile users, please visit through a PC 😓.
@@ -408,8 +451,8 @@
                                 class="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center text-xs">🌐</span>
                             Languages &amp; Scoring</h3>
                         <ul class="text-zinc-400 text-sm space-y-2">
-                            <li>• Arabic &amp; English allowed</li>
-                            <li>• English improves evaluation</li>
+                            <li>• English only (Arabic is no longer allowed)</li>
+                            <li>• Good English improves evaluation</li>
                             <li>• 3 judges per match</li>
                             <li>• Pre-set evaluation criteria</li>
                         </ul>
@@ -772,6 +815,14 @@
                 });
             }
         })();
+        
+        // close announcement handler
+        document.querySelectorAll('.close-announcement').forEach(button => {
+            button.addEventListener('click', () => {
+                const ann = button.closest('.announcement');
+                ann && ann.remove();
+            });
+        });
     </script>
     <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'9d5d478bc054baac',t:'MTc3MjQyMTc3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
 </body>
